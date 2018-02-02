@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>network</title>
+<script src="../js/D3/d3.min.js"></script>
+<link rel="stylesheet" href="../css/style.css" type="text/css"/>
+</head>
+<body>
+<script type="text/javascript">
+var xmlHttp;
+function loadXmlDoc(url,cfun){
+	if(window.XmlHttpRequest){
+		xmlHttp=new XmlHttpRequest();
+	}else{
+		xmlHttp=new ActiveXObject("Microsoft.XmlHttp");
+	}
+	xmlHttp.onreadystatechange=cfun;
+	xmlHttp.open("GET",url,true);//true表示开启异步
+	xmlHttp.send();
+}
+function myFunction(){
+	loadXmlDoc("/ajax.txt",function(){
+		if(xmlHttp.readyState==4&&xmlHttp.status==200){
+			document.getElementById("div").innerHtml=xmlHttp.responseText;
+		}
+	});
+}
+var socket=new WebSocket('ws://127.0.0.1:8080');
+socket.onopen=function(event){
+	console.log("socket open");
+	socket.send("i am js");
+	socket.onmessage=function(event){
+		console.log("socket receive message"+event);
+	}
+	socket.onclose=function(event){
+		console.log("socket close");
+	}	
+}
+const dataSet=[
+	{type:"sink",id:0,radiu:30,position:[110,70],xSet:[1,2,3],ySet:["1010101","10101101"]},
+	{type:"normal",id:1,radiu:10,position:[70,30],sensData:"1000101",dataSet:["1000101","11101010","1000101","1000101"]},
+	{type:"normal",id:2,radiu:10,position:[80,80],sensData:"11101011",dataSet:["1011101","11101010"]},
+	{type:"normal",id:3,radiu:10,position:[60,20],sensData:"10111011",dataSet:["1010101","11101010","1000101"]},
+	{type:"normal",id:4,radiu:10,position:[30,98],sensData:"10111011",dataSet:["1110101","11101010"]},
+	{type:"normal",id:5,radiu:10,position:[50,20],sensData:"1010111",dataSet:["1010101","11101010","1000101","1000101","1000101"]},
+	{type:"normal",id:6,radiu:10,position:[80,70],sensData:"10101010",dataSet:["1010111","11101010","1000101"]},
+	{type:"normal",id:7,radiu:10,position:[75,25],sensData:"10101001",dataSet:["1010101","11101010"]},
+	{type:"normal",id:8,radiu:10,position:[8,20],sensData:"10101011",dataSet:["1010111","11101010"]},
+	{type:"normal",id:9,radiu:10,position:[66,75],sensData:"00101011",dataSet:["1010101","11101010"]},
+	{type:"normal",id:10,radiu:10,position:[66,69],sensData:"10101011",dataSet:["1010101","11101010","1000101","1000101","1000101"]},
+	{type:"normal",id:11,radiu:10,position:[66,60],sensData:"0101011",dataSet:["1010101","11101010","1000101","1000101","1000101","1000101"]},
+	{type:"normal",id:12,radiu:10,position:[66,50],sensData:"1010011",dataSet:["1010101","11101010"]},
+	{type:"normal",id:13,radiu:10,position:[66,90],sensData:"10100011",dataSet:["1010101","11101010","1000101","1000101","1000101"]},
+	{type:"normal",id:14,radiu:10,position:[66,40],sensData:"10000011",dataSet:["1010101","11101010"]}
+	];//定义数据集
+const eventSet=[
+	{name:"round",time:1},
+	{name:"guangbo",Fid:3,Tid:[1,2,4,5],dataSet:[["1010010101","1011101","1011101","1011101","1011101","1011101","1011101"],["10010101","1111","1011101","1011101","1011101"],["10010101","001111"],["1010101","0111"]]},	
+	{name:"danbo",Fid:4,Tid:[1],dataSet:[["1010101","0111","1011101","1011101","1011101","1011101","1011101","1011101","1011101","1011101","1011101"]]},
+	{name:"guangbo",Fid:5,Tid:[1,2,3,4],dataSet:[["1010010101","1011101","1010010101","1011101","1011101"],["10010101","1111"],["10010101","001111"],["1010101","0111"]]},
+	{name:"boom",id:11},
+	{name:"round",time:2},
+	{name:"guangbo",Fid:2,Tid:[1,3,4,5],dataSet:[["1010010101","1011101","1010010101"],["10010101","1111"],["10010101","001111"],["1010101","0111","1010010101","1010010101"]]},	
+	{name:"danbo",Fid:5,Tid:[9],dataSet:[["1010010101","1011101","1010010101"]]},
+	{name:"boom",id:8},
+	{name:"guangbo",Fid:6,Tid:[1,2,3,4],dataSet:[["1010010101","1011101","1010010101","1011101","1011101","1011101","1011101","1011101","1011101","1011101","1011101","1011101","1011101","1011101","1011101","1011101"],["10010101","1111"],["10010101","001111","1010010101","1010010101"],["1010101","0111"]]}
+];//定义事件集合
+const colorSet=["#1f77b4","#aec7e8","#ff7f0e","#ffbb78","#2ca02c","#98df8a","#d62728","#ff9896","#9467bd","#c5b0d5",
+			    "#8c564b","#c49c94","#e377c2","#f7b6d2","#7f7f7f","#c7c7c7","#bcbd22","#dbdb8d","#17becf","#9edae5"];//定义颜色集合
+var color=["red","green"];	
+var rposition=[{"type":"sink","position":[35,20]},{"type":"normal","position":[35,40]}];//提示框位置
+
+var sinkColor="red";//定义节点颜色
+var normalColor="green";
+var CsinkColor="orange";
+var CnormalColor="white";
+var sinkStrokeColor="red";
+var normalStrokeColor="black";
+
+var sinkR=10;//定义节点半径
+var normalR=4;
+var CsinkR=12;
+var CnormalR=6;
+
+var svgWidth=1200;//画布大小
+var svgHeight=900;
+
+var initWidth=100;//比例尺参数
+var initHeight=100;
+var formatWidth=650;
+var formatHeight=650;
+
+var xOff=30;//偏移量
+var yOff=10;
+var padding={left:40,right:40,top:40,bottom:40};
+var width=initWidth-(padding.left+padding.right);
+var height=initHeight-(padding.top+padding.bottom);
+
+var xScale=d3.scaleLinear().domain([0,initWidth]).range([0,formatWidth]);//划定数轴的比例尺
+var yScale=d3.scaleLinear().domain([0,initHeight]).range([formatHeight,0]);
+
+var _xScale=d3.scaleLinear().domain([0,formatWidth]).range([0,initWidth]);//反向比例尺
+var _yScale=d3.scaleLinear().domain([formatHeight,0]).range([0,initHeight]);
+
+var timerGroup=new Array();//定时器组
+var speed=500;
+/*--------------------------------------------------------------------以上是变量定义---------------*／
+/*var mX=d3.max(dataSet,function(d){//定义点的比例尺
+	return d.position[0];
+});
+var mY=d3.max(dataSet,function(d){
+	return d.position[1];
+});
+var xFormat=d3.scaleLinear().domain([0,mX]).range([0,formatWidth]);
+var yFormat=d3.scaleLinear().domain([0,mY]).range([formatHeight,0]);*/
+var b=d3.select("body").append("div").attr("class","div");//右侧选项框
+//b.append("button").attr("id","b1").attr("class","button").text("广播");
+//b.append("button").attr("id","b2").attr("class","button").text("单播");
+b.append("button").attr("id","b3").attr("class","button").text("开始");
+b.append("button").attr("id","b4").attr("class","button").text("停止");
+b.append("button").attr("id","b5").attr("class","button").text("重制");
+/*var select=document.getElementById("b5");
+var optionSet=["选项1","选项2","选项3"];
+for(var i in optionSet){
+	var option=new Option(optionSet[i]);
+	select.options.add(option);
+}*/
+
+var c=d3.select("body").append("div").attr("class","text").attr("id","text");//右侧信息显示
+c.append("p").attr("id","p1").attr("class","pT").text("传播轮数：");
+c.append("p").attr("id","p2").attr("class","pT").text("传播形式：");
+c.append("p").attr("id","p3").attr("class","pT").text("数据起始：");
+c.append("p").attr("id","p4").attr("class","pT").text("数据终止：");
+c.append("p").attr("class","pT").text("传播过程:");
+c.append("textarea").attr("class","textareaM").attr("id","textareaM")
+
+var d=d3.select("body").append("div").attr("id","chess").attr("class","chess").style("opacity",0.3);//右侧信息显示
+d.append("p").attr("id","p5").attr("class","p").text("输入要查询的节点id:");
+d.append("input").attr("id","i1").attr("class","input");
+d.append("button").attr("id","b6").attr("class","Cbutton").text("确定");
+
+var e=d3.select("body").append("div").attr("id","show").attr("class","show").style("opacity",0);
+e.append("p").attr("id","p6").attr("class","show-p").text("节点id:");
+e.append("p").attr("id","p7").attr("class","show-p").text("节点类型:");
+e.append("p").attr("id","p8").attr("class","show-p").text("节点数据:");
+e.append("p").attr("id","p9").attr("class","show-p").text("其他数据:");
+e.append("button").attr("id","b7").attr("class","Cbutton").text("返回");
+
+var f=d3.select("body").append("div").attr("id","speed").attr("class","speed").style("opacity",0.3);//右侧调速
+f.append("p").attr("class","p").text("速度调节:");
+f.append("select").attr("id","selected").attr("class","selected");
+f.append("button").attr("id","b8").attr("class","Sbutton").text("确定");
+//var selected=d3.select("#selected");
+var selected=document.getElementById("selected");
+var optionSet=["X1","X2","X3","X4"];
+for(i in optionSet){
+	var option=new Option(optionSet[i]);
+	selected.options.add(option);
+}
+
+var g=d3.select("body").append("div").attr("id","Pmessage").attr("class","Pmessage").style("opacity",0.3);//右侧包信息显示
+g.append("p").attr("class","p").attr("id","p10").text("数据包个数:");
+g.append("p").attr("class","p").text("数据包内容:");
+g.append("textarea").attr("id","textarea").attr("class","textarea");
+
+
+
+
+
+var svg=d3.select("body").append("svg").attr("width",svgWidth).attr("height",svgHeight)//svg画布
+		  .style("padding-left",padding.left).style("padding-right",padding.right)
+		  .style("padding-top",padding.top).style("padding-bottom",padding.bottom);
+		  
+svg.append("g").attr("class","axis").attr("transform","translate("+xOff+","+yOff+")").call(d3.axisLeft(yScale));//移动左右,上下
+svg.append("g").attr("class","axis").attr("transform","translate("+xOff+","+(formatHeight+yOff)+")").call(d3.axisBottom(xScale));
+
+var cover=svg.append("g")//添加左侧指使栏
+			 .attr("id","cover");
+cover.selectAll("rect")
+	 .data(rposition)
+	 .enter()
+	 .append("rect")
+	 .attr("x",function(d){
+		 return d.position[0];
+		 })
+	 .attr("y",function(d){
+		 return d.position[1];
+		 })
+	 .attr("width",10)
+     .attr("height",10)
+	 .attr("fill",function(d,i){
+		 return d.type=='sink'?color[0]:color[1];
+		 });
+cover.selectAll("text")
+	 .data(rposition)
+	 .enter()
+	 .append("text")
+	 .text(function(d){
+		 return " "+d.type;
+	 })
+	 .attr("x",function(d){
+		 return d.position[0]+12;
+	 })
+	 .attr("y",function(d){
+		 return d.position[1]+10;
+	 });
+	 
+function make_x_gridline(){
+	return d3.axisTop(xScale).ticks(10);
+}
+function make_y_gridline(){
+	return d3.axisRight(yScale).ticks(10);
+}
+svg.append("g").attr("class","axisLine").attr("transform","translate("+xOff+","+(formatHeight+yOff)+")")//定义坐标线
+			   .call(make_x_gridline().tickSize(formatHeight).tickFormat(""));
+svg.append("g").attr("class","axisLine").attr("transform","translate("+xOff+","+yOff+")")
+			   .call(make_y_gridline().tickSize(formatWidth).tickFormat(""));
+
+var tooltip=d3.select("body").append("div").attr("class","tooltip");//绘制提示框
+
+var drag=d3.drag(function(d,i){//拖拽事件
+	return {x:xScale(d.position[0])+xOff,y:yScale(d.position[1])+yOff};
+}).on("start",function(d){
+	console.log("drag start");
+	d3.select("#loop"+d.id).attr("class","loop-f");
+	d3.select("#circle"+d.id).on("mouseover",false).on("mousemove",false).on("mouseout",false);//阻止鼠标事件发生
+	tooltip.style("opacity",0);
+}).on("end",function(d){
+	console.log("drag.end");
+	paintLoop();
+	paintCircle();
+}).on("drag",function(d){
+	d3.select(this).attr("cx",d3.event.x).attr("cy",d3.event.y);
+	d.position[0]=_xScale(d3.event.x-xOff);
+	d.position[1]=_yScale(d3.event.y-yOff);
+	//console.log(d.position[0]+":"+d.position[1]);paintCircle();
+});
+
+paintLoop();
+function paintLoop(){
+	d3.select("#loop").remove();
+	var loop=svg.append("g").attr("id","loop").attr("class","loop-f").selectAll("circle").data(dataSet).enter().append("circle");//绘制圆环
+	loop.attr("id",function(d){
+		return "loop"+d.id;
+	}).attr("cx",function(d){
+		return xScale(d.position[0])+xOff;
+	}).attr("cy",function(d){
+		return yScale(d.position[1])+yOff;
+	}).attr("r",function(d){
+		return 0;//return xScale(d.radiu);
+	}).attr("stroke",function(d){
+		if(d.type=='sink'){
+			return sinkStrokeColor;
+		}else{
+			return normalStrokeColor;
+		}
+	});
+}		   
+
+paintCircle();
+function paintCircle(){
+	d3.select("#circle").remove();
+	var circle=svg.append("g").attr("id","circle").attr("class","circle").selectAll("circle").data(dataSet).enter().append("circle");//绘制节点
+	circle.attr("id",function(d){
+		return "circle"+d.id;
+	}).attr("cx",function(d){
+		return xScale(d.position[0])+xOff;
+	}).attr("cy",function(d){
+		return yScale(d.position[1])+yOff;
+	}).attr("r",function(d){
+		if(d.type=='sink'){
+			return sinkR;
+		}else{
+			return normalR;
+		}
+	})
+	.attr("fill",function(d){
+		if(d.type=='sink'){
+			return sinkColor;
+		}else{
+			return normalColor;
+		}
+	})
+	.attr("stroke","black")
+	.attr("stroke-width","1")
+	.on("mouseover",function(d){
+		tooltip.style("opacity",0.6);
+		if(d.type=='sink'){
+			d3.select(this).attr("fill",CsinkColor).attr("r",CsinkR);
+			tooltip.html("节点ID:"+d.id+"<br>"+"内容:"+d.xSet).style("left",d3.event.pageX+"px").style("top",d3.event.pageY+20+"px");//pageX以页面为基准，clientX以浏览器为基准，screenX以屏幕为基准
+		}else{
+			d3.select(this).attr("fill",CnormalColor).attr("r",CnormalR);
+			tooltip.html("节点ID:"+d.id+"<br>"+"内容："+d.sensData).style("left",d3.event.pageX+"px").style("top",d3.event.pageY+"px");
+		}
+		d3.select("#loop"+d.id).attr("class","loop").transition().duration(800).attr("r",function(d){
+			return xScale(d.radiu);
+		});
+	})
+	.on("mousemove",function(d){
+		tooltip.style("left",d3.event.pageX+"px").style("top",d3.event.pageY+20+"px");
+	})
+	.on("mouseout",function(d){
+		if(d.type=='sink'){
+			d3.select(this).attr("fill",sinkColor).attr("r",sinkR);
+		}else{
+			d3.select(this).attr("fill",normalColor).attr("r",normalR);
+		}
+		tooltip.style("opacity",0);
+		d3.select("#loop"+d.id).attr("class","loop").transition().duration(500).attr("r",0);
+	}).call(drag);
+}
+/*事件触发分割线---------------------------------------------------------------------------------*/
+
+var pointGroup=svg.append("g").attr("id","pointGroup");//创建数据包组
+var rectGroup=svg.append("g").attr("id","rectGroup");
+function sendMsg(svg,dataSet,Fid,Tid,Bnumber,msg){//发送数据包
+	var Fdata;
+	var Tdata;
+	var length=0;
+	for(i in dataSet){
+		if(dataSet[i].id==Fid){
+			Fdata=dataSet[i];
+		}
+		if(dataSet[i].id==Tid){
+			Tdata=dataSet[i];
+		}
+	}
+	if(Tdata.type=='sink'){
+		length=Tdata.ySet.length;
+	}else{
+		length=Tdata.dataSet.length;
+	}
+	console.log(Tdata.id+":"+length);
+	for(var i=0;i<length;i++){
+		var rect=rectGroup
+		.append("rect")
+		.attr("id","rect"+Fdata.id)
+		.style("opacity",0.5)
+		.attr("class","rect")
+		.attr("width",6)
+		.attr("height",6)
+		.attr("x",function(){
+			if(i==0||i==3||i==6||i==13){
+				return xScale(Fdata.position[0])+xOff;
+			}
+			if(i==14||i==15||i==4||i==5){
+				return xScale(Fdata.position[0]+1)+xOff;
+			}
+			if(i==12||i==2||i==1||i==7){
+				return xScale(Fdata.position[0]-1)+xOff;
+			}
+			if(i==11||i==10||i==9||i==8){
+				return xScale(Fdata.position[0]-2)+xOff;
+			}
+		})
+		.attr("y",function(){
+			if(i==9||i==1||i==0||i==4){
+				return yScale(Fdata.position[1])+yOff;
+			}
+			if(i==10||i==2||i==3||i==15){
+				return yScale(Fdata.position[1]+1)+yOff;
+			}
+			if(i==11||i==12||i==13||i==14){
+				return yScale(Fdata.position[1]+2)+yOff;
+			}
+			if(i==8||i==7||i==6||i==5){
+				return yScale(Fdata.position[1]-1)+yOff;
+			}
+		})
+		.attr("fill",colorSet[i])
+		.on("mouseover",function(d){
+			if(msg.length>0){
+				var sum="";
+				d3.select("#p10").text("数据包个数:"+Bnumber);
+				d3.select("#textarea").text(function(){
+					for(i in msg){
+						sum=sum+msg[i]+"\n";
+					}
+					return sum;
+				});
+			}
+		})
+		.transition()
+		.duration(speed)
+		.attr("x",function(){
+			if(i==0||i==3||i==6||i==13){
+				return xScale(Tdata.position[0])+xOff;
+			}
+			if(i==14||i==15||i==4||i==5){
+				return xScale(Tdata.position[0]+1)+xOff;
+			}
+			if(i==12||i==2||i==1||i==7){
+				return xScale(Tdata.position[0]-1)+xOff;
+			}
+			if(i==11||i==10||i==9||i==8){
+				return xScale(Tdata.position[0]-2)+xOff;
+			}
+		})
+		.attr("y",function(){
+			if(i==9||i==1||i==0||i==4){
+				return yScale(Tdata.position[1])+yOff;
+			}
+			if(i==10||i==2||i==3||i==15){
+				return yScale(Tdata.position[1]+1)+yOff;
+			}
+			if(i==11||i==12||i==13||i==14){
+				return yScale(Tdata.position[1]+2)+yOff;
+			}
+			if(i==8||i==7||i==6||i==5){
+				return yScale(Tdata.position[1]-1)+yOff;
+			}
+		})
+		.remove();
+	}
+	
+		/*var point=pointGroup.append("circle").attr("class","point").attr("id","point"+Fdata.id).style("opacity",1);//画数据点
+		point.attr("cx",xScale(Fdata.position[0])+xOff)
+			 .attr("cy",yScale(Fdata.position[1])+yOff)
+			 .attr("r","1")
+			 .style("opacity",0)
+			 .on("mouseover",function(d){
+				 d3.select(this).delay(1000);
+			 })
+			 .on("mouseout",function(d){
+				 d3.select(this).title("mes");
+			 })
+			 .transition()
+			 .duration(5000)
+			 /*.each("start",function(d){
+				 console.log("start");
+			 })
+			 .attr("cx",xScale(Tdata.position[0])+xOff)
+			 .attr("cy",yScale(Tdata.position[1])+yOff)
+			 .attrTween("r",function(d,i,a){//a是初始的大小,过度属性
+				 return function(t){
+					 return 2+t;
+				 }
+			 })
+			 .style("opacity",0)
+			 .delay(10)
+		     .remove();*/
+	
+	var Sdata=[];//创造连线
+	Sdata.push(Fdata.position);
+	Sdata.push(Tdata.position);
+	var line=d3.line();
+	line.x(function(d){
+		return xScale(d[0])+xOff;
+	}).y(function(d){
+		return yScale(d[1])+yOff;
+	});
+	/*var defs=svg.append("defs");
+	defs.append("marker")
+		.attr("id","arrow")
+		.attr("markerUnits","strokeWidth")
+		.attr("makerWidth",10)
+		.attr("makerHeight",10)
+		.attr("viewBox","12 12 12 12")
+		.attr("refX",Tdata.position[0])
+		.attr("refY",Tdata.position[1]);*/
+	var color=colorSet[parseInt((Math.random()*100)%20)];
+	console.log(color);
+	var path=svg.append("path")
+	.attr("class","path")
+	.attr("stroke",color)
+	.transition()
+    .duration(speed)
+    .attr("d",line(Sdata))
+    .attr("stroke-opacity",0)
+    .remove();
+	//setTimeout(sendMsg,10);
+}
+
+//数据驱动模块
+var dataDriverStep=0;
+var x=0;
+d3.select("#b5").on("click",function(){
+	for(i in timerGroup){
+		window.clearInterval(timerGroup[i]);
+		timerGroup.shift();
+	}
+	dataDriverStep=0;
+	dataDriver();
+});
+function boom(Bid){
+	d3.select("#circle"+Bid).transition().duration(speed).attr("fill","gold").attr("r",18).remove();
+	for(var i=0;i<dataSet.length;i++){
+		if(dataSet[i].id==Bid){
+			dataSet.splice(i,1);//起始下标，长度，需要替换的，delete不会改变数组长度，会空出被删除的位置上的元素（标记为undefined）
+		}
+	}
+}
+function dataDriver(){
+	var timer=setInterval(function(){
+		var msg;
+		if(dataDriverStep<eventSet.length){
+			x=0;
+			console.log("aa");
+			console.log(eventSet.length+":"+dataDriverStep);
+			var eData=eventSet[dataDriverStep];
+			if(eData.name=='round'){
+				d3.select("#p1").text("轮数："+eData.time);
+				d3.select("#p2").text("传播形式：");
+				d3.select("#p3").text("数据起始：");
+				d3.select("#p4").text("数据终止：").style("color","white");
+				msg=d3.select("#textareaM").text();
+				d3.select("#textareaM").text(msg+"\n"+"#################"+"\n"+"轮数:"+eData.time);
+			}
+			if(eData.name=='boom'){
+				d3.select("#p2").text("#");
+				d3.select("#p3").text("#");
+				d3.select("#p4").text("第"+eData.id+"号节点被损毁!").style("color","red");
+				msg=d3.select("#textareaM").text();
+				d3.select("#textareaM").text(msg+"\n"+"-----------------"+"\n"+"第"+eData.id+"号节点被损毁!");
+				boom(eData.id);
+			}
+			if(eData.name=='guangbo'){
+				d3.select("#p2").text("传播形式：广播");
+				d3.select("#p3").text("数据起始："+eData.Fid);
+				d3.select("#p4").text("数据终止："+eData.Tid).style("color","white");
+				msg=d3.select("#textareaM").text();
+				d3.select("#textareaM").text(msg+"\n"+"-----------------"+"\n"+"传播形式：广播"+"\n"+"数据起始："+eData.Fid+"\n"+"数据终止："+eData.Tid);
+				
+				d3.select("#circle"+eData.Fid).style("fill","white");
+				for(i in dataSet){
+				    for(j in eData.Tid){
+						if(dataSet[i].id==eData.Tid[j]){
+							if(dataSet[i].type=='normal'){
+								dataSet[i].dataSet=eData.dataSet[x];
+							}
+							if(dataSet[i].type=='sink'){
+								dataSet[i].ySet=eData.dataSet[x];
+							}
+							x++;
+							sendMsg(svg,dataSet,eData.Fid,eData.Tid[j],eData.dataSet[x].length,eData.dataSet[x]);
+						}
+					}
+					
+				}
+			}
+			if(eData.name=='danbo'){
+				d3.select("#p2").text("传播形式：单播");
+				d3.select("#p3").text("数据起始："+eData.Fid);
+				d3.select("#p4").text("数据终止："+eData.Tid).style("color","white");
+				msg=d3.select("#textareaM").text();
+				d3.select("#textareaM").text(msg+"\n"+"-----------------"+"\n"+"传播形式：单播"+"\n"+"数据起始："+eData.Fid+"\n"+"数据终止："+eData.Tid);
+				d3.select("#circle"+eData.Fid).style("fill","white");
+				for(i in dataSet){
+					if(dataSet[i].id==eData.Tid[0]){
+						if(dataSet[i].type=='normal'){
+							dataSet[i].dataSet=eData.dataSet[0];
+						}
+						if(dataSet[i].type=='sink'){
+							dataSet[i].ySet=eData.ySet[0];
+						}
+						sendMsg(svg,dataSet,eData.Fid,eData.Tid,eData.dataSet[0].length,eData.dataSet[0]);
+					}
+				}
+				
+			}
+			var setGreenTimer=setInterval(function(){
+				d3.select("#circle"+eData.Fid).style("fill","green");
+				window.clearInterval(setGreenTimer);
+			},speed);
+			dataDriverStep++;
+		}
+	},speed);
+	timerGroup.push(timer);
+	console.log(timerGroup);
+}
+//按钮触发的时间组合
+function guangbo(){
+d3.select("#b1").on("click",function(d){
+	var timer=setInterval(function(){
+		for(var i=0;i<dataSet.length;i++){
+			var data=dataSet[i];
+			if(data.type=='sink'){
+				for(var j=0;j<dataSet.length;j++){
+					var count=(data.position[0]-dataSet[j].position[0])*(data.position[0]-dataSet[j].position[0])+(data.position[1]-dataSet[j].position[1])*(data.position[1]-dataSet[j].position[1]);
+					//console.log(data.id+":"+dataSet[j].id+" "+Math.sqrt(count));
+					if(data.radiu>=(Math.sqrt(count))){
+						sendMsg(svg,dataSet,dataSet[j].id,data.id);
+					}
+				}
+			}
+			if(data.type=='normal'){
+			for(var j=0;j<dataSet.length;j++){
+				var count=(data.position[0]-dataSet[j].position[0])*(data.position[0]-dataSet[j].position[0])+(data.position[1]-dataSet[j].position[1])*(data.position[1]-dataSet[j].position[1]);
+				//console.log(data.id+":"+dataSet[j].id+" "+Math.sqrt(count));
+				if(data.radiu>=(Math.sqrt(count))){
+					sendMsg(svg,dataSet,data.id,dataSet[j].id);
+				}
+			}
+		  }
+		}
+	},speed);
+	timerGroup.push(timer);
+});
+}
+guangbo();
+
+/*var linePath=d3.line().x(function(d){//绘制路径
+	return xScale(dataSet[d].position[0])+xOff;
+}).y(function(d){
+	return yScale(dataSet[d].positioin[1])+yOff;
+}).interpolate("basis");*/
+
+/*function paintLine(){
+	svg.append("path").attr("d",function(d){
+		return linePath(d);
+	}).attr("fill","black").attr("stroke-width",3).attr("stroke-dasharray",2,2);
+}*/
+function danbo(){
+d3.select("#b2").on("click.first",function(d){
+	var pathData=new Array();
+	var Fid=parseInt((Math.random()*10)%14);
+	var Tid=parseInt((Math.random()*10)%14);
+	var timer=setInterval(function(){
+		Fid=Tid;
+		Tid=parseInt((Math.random()*10)%14);
+		pathData.push(Fid);
+		sendMsg(svg,dataSet,Fid,Tid);
+	},speed);
+	timerGroup.push(timer);
+	/*for(var i=0;i<100;i++){
+		Fid=Tid;
+		Tid=parseInt((Math.random()*10)%14);
+		setTimeout(function(){},3000);
+	}*/
+}).on("click.second",function(d){
+	var Fid=parseInt((Math.random()*10)%14);
+	var Tid=parseInt((Math.random()*10)%14);
+	sendMsg(svg,dataSet,Fid,Tid);
+});
+return false;
+}
+danbo();
+/*.on("click.first",null)*/
+/*var timer=setInterval(sendMsg(svg,dataSet,1,8),5);//定时器
+clearInterval(timer);*/
+//d3.timer();
+function start(){
+	d3.select("#b3").on("click",function(){
+		for(i in timerGroup){
+			window.clearInterval(timerGroup[i]);
+			timerGroup.shift();
+		}
+		dataDriverStep=0;
+		dataDriver();
+	});
+}
+start();
+function close(){
+	d3.select("#b4").on("click",function(){
+		for(i in timerGroup){
+			window.clearInterval(timerGroup[i]);
+			timerGroup.shift();
+		}
+		
+	})
+}
+close();
+function makeTrue(){
+	d3.select("#b6").on("click",function(d){
+		var id=document.getElementById("i1").value;
+		console.log(typeof(id));
+		if(id.length!=0){
+			for(i in dataSet){
+				if(dataSet[i].id==id){
+					console.log(id);
+					d3.select("#chess").style("opacity",0).style("z-index",0);
+					d3.select("#text").style("opacity",0);
+					d3.select("#show").style("opacity",0.3).style("z-index",10);
+					d3.select("#p6").text("节点id:"+dataSet[i].id);
+					d3.select("#p7").text("节点类型:"+dataSet[i].type);
+					if(dataSet[i].type=='sink'){
+						d3.select("#p8").text("节点数据:"+dataSet[i].xSet);
+						d3.select("#p9").text("其他数据:"+dataSet[i].ySet);
+					}else{
+						d3.select("#p8").text("节点数据:"+dataSet[i].sensData);
+						d3.select("#p9").text("其他数据:"+dataSet[i].dataSet);
+					}
+					
+				}
+			}
+		}	
+	});
+}
+makeTrue();
+function makeClose(){
+	d3.select("#b7").on("click",function(){
+		d3.select("#chess").style("opacity",0.3).style("z-index",10);
+		d3.select("#text").style("opacity",0.3);
+		d3.select("#show").style("opacity",0).style("z-index",0);
+	})
+}
+makeClose();
+function changeSpeed(){
+	d3.select("#b8").on("click",function(d){
+		var level=document.getElementById("selected");
+		for(i in level.options){
+			if(level.options[i].selected==true){
+				var SP=level.options[i].value;
+				if(SP=="X1"){
+					speed=500;
+				}
+				if(SP=="X2"){
+					speed=500;
+					speed=parseInt(speed*4);
+				}
+				if(SP=="X3"){
+					speed=500;
+					speed=parseInt(speed*8);
+				}
+				else if(SP=="X4"){
+					speed=500;
+					speed=parseInt(speed*16);
+				}
+			}
+		}
+		console.log("当前速度:"+speed+"ms");
+	});
+}
+changeSpeed();
+</script>
+</body>
+</html>
