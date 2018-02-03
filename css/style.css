@@ -64,16 +64,24 @@ p.bar{
 	stroke-opacity:0.5;
 	stroke-dasharray:0.5,0.5;
 }
+.parent{
+	position:fixed;
+	right:10%;
+	width:450px;
+	height:640px;
+	
+}
 .div{
 	position:absolute;
 	width:250px;
 	height:230px;
 	background-color:#123748;
 	opacity:0.3;
-	margin-left:970px;
+	margin-left:190px;
 	margin-top:10px;
 	z-index:0;
 	text-align:center;
+	float:right;
 }
 .button{
 	position:relative;
@@ -92,7 +100,7 @@ p.bar{
 	height:230px;
 	background-color:#123748;
 	opacity:0.3;
-	margin-left:780px;
+	margin-left:0;
 	margin-top:10px;
 	text-align:left;
 	padding-left:10px;
@@ -118,7 +126,7 @@ p.bar{
 	height:160px;
 	background-color:#123748;
 	/*opacity:0.3;*/
-	margin-left:780px;
+	margin-left:0;
 	margin-top:250px;
 	text-align:left;
 	padding-left:10px;
@@ -136,14 +144,23 @@ p.bar{
 .show{
 	position:absolute;
 	width:170px;
-	height:230px;
+	height:160px;
 	background-color:#123748;
 	/*opacity:0;*/
-	margin-left:780px;
-	margin-top:180px;
+	margin-right:0px;
+	margin-top:250px;
 	text-align:left;
 	padding-left:10px;
 	z-index:0;
+}
+.Wbutton{
+	position:relative;
+	width:50px;
+	height:25px;
+	margin-top:0px;
+	background-color:;
+	border-radius:10px;
+	font-size:15px;
 }
 .show-p{
 	color:white;
@@ -164,7 +181,7 @@ p.bar{
 	width:240px;
 	height:160px;
 	background-color:#123748;
-	margin-left:970px;
+	margin-left:190px;
 	margin-top:250px;
 	/*text-align:left;*/
 	padding-left:10px;
@@ -189,7 +206,7 @@ p.bar{
 	height:230px;
 	background-color:#123748;
 	opacity:0.3;
-	margin-left:780px;
+	margin-left:0px;
 	margin-top:420px;
 	padding-left:10px;
 }
