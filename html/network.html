@@ -493,80 +493,80 @@ function boom(Bid){
 	}
 }
 function dataDriver(){
-	var timer=setInterval(function(){
-		var msg;
-		if(dataDriverStep<eventSet.length){
-			x=0;
-			console.log("aa");
-			console.log(eventSet.length+":"+dataDriverStep);
-			var eData=eventSet[dataDriverStep];
-			if(eData.name=='round'){
-				d3.select("#p1").text("轮数："+eData.time);
-				d3.select("#p2").text("传播形式：");
-				d3.select("#p3").text("数据起始：");
-				d3.select("#p4").text("数据终止：").style("color","white");
-				msg=d3.select("#textareaM").text();
-				d3.select("#textareaM").text(msg+"\n"+"#################"+"\n"+"轮数:"+eData.time);
-			}
-			if(eData.name=='boom'){
-				d3.select("#p2").text("#");
-				d3.select("#p3").text("#");
-				d3.select("#p4").text("第"+eData.id+"号节点被损毁!").style("color","red");
-				msg=d3.select("#textareaM").text();
-				d3.select("#textareaM").text(msg+"\n"+"-----------------"+"\n"+"第"+eData.id+"号节点被损毁!");
-				boom(eData.id);
-			}
-			if(eData.name=='guangbo'){
-				d3.select("#p2").text("传播形式：广播");
-				d3.select("#p3").text("数据起始："+eData.Fid);
-				d3.select("#p4").text("数据终止："+eData.Tid).style("color","white");
-				msg=d3.select("#textareaM").text();
-				d3.select("#textareaM").text(msg+"\n"+"-----------------"+"\n"+"传播形式：广播"+"\n"+"数据起始："+eData.Fid+"\n"+"数据终止："+eData.Tid);
-				
-				d3.select("#circle"+eData.Fid).style("fill","white");
-				for(j in eData.Tid){
+		var timer=setInterval(function(){
+			var msg;
+			if(dataDriverStep<eventSet.length){
+				x=0;
+				console.log("aa");
+				console.log(eventSet.length+":"+dataDriverStep);
+				var eData=eventSet[dataDriverStep];
+				if(eData.name=='round'){
+					d3.select("#p1").text("轮数："+eData.time);
+					d3.select("#p2").text("传播形式：");
+					d3.select("#p3").text("数据起始：");
+					d3.select("#p4").text("数据终止：").style("color","white");
+					msg=d3.select("#textareaM").text();
+					d3.select("#textareaM").text(msg+"\n"+"#################"+"\n"+"轮数:"+eData.time);
+				}
+				if(eData.name=='boom'){
+					d3.select("#p2").text("#");
+					d3.select("#p3").text("#");
+					d3.select("#p4").text("第"+eData.id+"号节点被损毁!").style("color","red");
+					msg=d3.select("#textareaM").text();
+					d3.select("#textareaM").text(msg+"\n"+"-----------------"+"\n"+"第"+eData.id+"号节点被损毁!");
+					boom(eData.id);
+				}
+				if(eData.name=='guangbo'){
+					d3.select("#p2").text("传播形式：广播");
+					d3.select("#p3").text("数据起始："+eData.Fid);
+					d3.select("#p4").text("数据终止："+eData.Tid).style("color","white");
+					msg=d3.select("#textareaM").text();
+					d3.select("#textareaM").text(msg+"\n"+"-----------------"+"\n"+"传播形式：广播"+"\n"+"数据起始："+eData.Fid+"\n"+"数据终止："+eData.Tid);
+					
+					d3.select("#circle"+eData.Fid).style("fill","white");
+					for(j in eData.Tid){
+						for(i in dataSet){
+							if(dataSet[i].id==eData.Tid[j]){
+								if(dataSet[i].type=='normal'){
+									dataSet[i].dataSet=eData.dataSet[x];
+								}
+								if(dataSet[i].type=='sink'){
+									dataSet[i].ySet=eData.dataSet[x];
+								}
+								sendMsg(svg,dataSet,eData.Fid,eData.Tid[j],eData.dataSet[x].length,eData.dataSet[x]);
+								x++;
+							}
+						}
+						
+					}
+				}
+				if(eData.name=='danbo'){
+					d3.select("#p2").text("传播形式：单播");
+					d3.select("#p3").text("数据起始："+eData.Fid);
+					d3.select("#p4").text("数据终止："+eData.Tid).style("color","white");
+					msg=d3.select("#textareaM").text();
+					d3.select("#textareaM").text(msg+"\n"+"-----------------"+"\n"+"传播形式：单播"+"\n"+"数据起始："+eData.Fid+"\n"+"数据终止："+eData.Tid);
+					d3.select("#circle"+eData.Fid).style("fill","white");
 					for(i in dataSet){
-						if(dataSet[i].id==eData.Tid[j]){
+						if(dataSet[i].id==eData.Tid[0]){
 							if(dataSet[i].type=='normal'){
-								dataSet[i].dataSet=eData.dataSet[x];
+								dataSet[i].dataSet=eData.dataSet[0];
 							}
 							if(dataSet[i].type=='sink'){
-								dataSet[i].ySet=eData.dataSet[x];
+								dataSet[i].ySet=eData.ySet[0];
 							}
-							sendMsg(svg,dataSet,eData.Fid,eData.Tid[j],eData.dataSet[x].length,eData.dataSet[x]);
-							x++;
+							sendMsg(svg,dataSet,eData.Fid,eData.Tid,eData.dataSet[0].length,eData.dataSet[0]);
 						}
 					}
 					
 				}
+				var setGreenTimer=setInterval(function(){
+					d3.select("#circle"+eData.Fid).style("fill","green");
+					window.clearInterval(setGreenTimer);
+				},speed);
+				dataDriverStep++;
 			}
-			if(eData.name=='danbo'){
-				d3.select("#p2").text("传播形式：单播");
-				d3.select("#p3").text("数据起始："+eData.Fid);
-				d3.select("#p4").text("数据终止："+eData.Tid).style("color","white");
-				msg=d3.select("#textareaM").text();
-				d3.select("#textareaM").text(msg+"\n"+"-----------------"+"\n"+"传播形式：单播"+"\n"+"数据起始："+eData.Fid+"\n"+"数据终止："+eData.Tid);
-				d3.select("#circle"+eData.Fid).style("fill","white");
-				for(i in dataSet){
-					if(dataSet[i].id==eData.Tid[0]){
-						if(dataSet[i].type=='normal'){
-							dataSet[i].dataSet=eData.dataSet[0];
-						}
-						if(dataSet[i].type=='sink'){
-							dataSet[i].ySet=eData.ySet[0];
-						}
-						sendMsg(svg,dataSet,eData.Fid,eData.Tid,eData.dataSet[0].length,eData.dataSet[0]);
-					}
-				}
-				
-			}
-			var setGreenTimer=setInterval(function(){
-				d3.select("#circle"+eData.Fid).style("fill","green");
-				window.clearInterval(setGreenTimer);
-			},speed);
-			dataDriverStep++;
-		}
-	},speed);
+		},speed);
 	timerGroup.push(timer);
 	console.log(timerGroup);
 }
